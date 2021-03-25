@@ -37,7 +37,7 @@ Ansible Playbook to launch AWS Infrastructure to Configure Reverse Proxy (i.e. H
 
 ## Links
 
-[Click here for Video and Post](https://www.linkedin.com/in/amanjhagrolia143/)
+[Click here for Video and Post](https://www.linkedin.com/posts/amanjhagrolia143_vimaldaga-righteducation-educationredefine-activity-6780856971349307393--A9z)
   
 ***Feel free to Contact!!***
 
