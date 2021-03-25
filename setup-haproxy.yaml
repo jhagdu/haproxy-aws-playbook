@@ -4,8 +4,8 @@
   - aws_profile: default
   - region: ap-south-1
   - inst_type: t2.micro
-  - ami_id: ami-0a9d27a9f4f5c0efc
-  - subnet_id: subnet-85efd5ed
+  - ami_id: ami-0a9d2na9j4a5cleic
+  - subnet_id: subnet-85afg5ed
   - ans_conf_dir: /etc/ansible/
   tasks: 
   - name: Include AWS Infra tasks
