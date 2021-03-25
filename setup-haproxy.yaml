@@ -1,0 +1,33 @@
+- name: Launch Infrastructure on AWS
+  hosts: localhost
+  vars:
+  - aws_profile: default
+  - region: ap-south-1
+  - inst_type: t2.micro
+  - ami_id: ami-0a9d27a9f4f5c0efc
+  - subnet_id: subnet-85efd5ed
+  - ans_conf_dir: /etc/ansible/
+  tasks: 
+  - name: Include AWS Infra tasks
+    include_tasks: awsInfra.yaml
+
+- name: Configuring LoadBalancer
+  hosts: loadbalancer
+  become: yes
+  tasks: 
+  - name: Include LoadBalancer Tasks
+    include_tasks: haproxy.yaml
+
+- name: Configuring Webserver
+  hosts: webserver
+  become: yes
+  tasks:
+  - name: Include Webserver Tasks
+    include_tasks: webserver.yaml
+
+- name: Output
+  hosts: localhost
+  tasks:
+  - name: LoadBalancer URL
+    debug:
+      msg: "LoadBalancer URL -> http://{{ groups['loadbalancer'][0] }}/"

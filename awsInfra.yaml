@@ -1,0 +1,107 @@
+- name: Creating Key-Pair
+  ec2_key:
+    name: webenvkey
+    state: present
+    profile: "{{ aws_profile }}"
+  register: webkp
+
+- name: Save Key PEM File
+  copy:
+    content: "{{ webkp.key.private_key }}"
+    dest: "{{ ans_conf_dir }}webenvkey.pem"
+    mode: '0400'
+  when: webkp.changed
+
+- name: Create a security group for Webserver Instances
+  ec2_group:
+    name: websg
+    description: Security Group for EC2 Web Servers
+    profile: "{{ aws_profile }}"
+    state: present
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+    rules_egress:
+      - proto: all
+        cidr_ip: 0.0.0.0/0
+  register: webfirewall
+
+- name: Create a security group for LoadBalancer Instances
+  ec2_group:
+    name: lbsg
+    description: Security Group for Loadbalancer
+    profile: "{{ aws_profile }}"
+    state: present
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+    rules_egress:
+      - proto: all
+        cidr_ip: 0.0.0.0/0
+  register: lbfirewall
+
+
+- name: Launch LoadBalancer Instance
+  ec2:
+    instance_type: "{{ inst_type }}"
+    image: "{{ ami_id }}"
+    key_name: "{{ webkp.key.name }}"
+    group: 
+      - "{{ lbfirewall.group_name }}"
+    wait: yes
+    count: 1
+    instance_tags:
+      Name: loadbalancer
+    vpc_subnet_id: "{{ subnet_id }}"
+    assign_public_ip: yes
+    state: present
+    profile: "{{ aws_profile }}"
+    region: "{{ region }}"
+  register: lb_instance
+
+
+- name: Launch Webserver Instance
+  ec2:
+    instance_type: "{{ inst_type }}"
+    image: "{{ ami_id }}"
+    key_name: "{{ webkp.key.name }}"
+    group: 
+      - "{{ webfirewall.group_name }}"
+    wait: yes
+    count: 3
+    instance_tags:
+      Name: webserver
+    vpc_subnet_id: "{{ subnet_id }}"
+    assign_public_ip: yes
+    state: present
+    profile: "{{ aws_profile }}"
+    region: "{{ region }}"
+  register: web_instance
+
+- name: Add new instance to loadbalancer host group
+  add_host:
+    hostname: "{{ item.public_ip }}"
+    groupname: loadbalancer
+  loop: "{{ lb_instance.instances }}"
+
+- name: Add new instance to webserver host group
+  add_host:
+    hostname: "{{ item.public_ip }}"
+    groupname: webserver
+  loop: "{{ web_instance.instances }}"
+
+- name : Wait
+  pause:
+    seconds: 46

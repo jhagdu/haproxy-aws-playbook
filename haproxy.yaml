@@ -1,0 +1,22 @@
+- name: Install haproxy package
+  package:
+    name: haproxy
+    state: present
+
+- name: Copy haproxy config File
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    mode: "0644"
+  register: conf_chng
+
+- name: Restart haproxy LB Service
+  service:
+    name: haproxy
+    state: restarted
+  when: conf_chng.changed
+
+- name: Start haproxy LB Service
+  service:
+    name: haproxy
+    state: started
